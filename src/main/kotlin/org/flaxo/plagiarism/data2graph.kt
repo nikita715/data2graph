@@ -197,8 +197,12 @@ fun Viz.refreshGraph(nodes: List<GraphNode>, links: List<GraphLink>, simulation:
         else -> DefaultNormalization()
     }
 
+    // Find active elements of the graph
+    val activeLinks = if (showAllNodes) links else links.filter { it.isVisible(visibleNames) }
+    val activeNodes = if (showAllNodes) nodes else nodes.filter { it.isVisible(visibleNames) }
+
     // Replacing graph force with the new one that is created according to the user's input.
-    val graphForce = GraphForce(links, nodes, normalization, scale, shift)
+    val graphForce = GraphForce(activeLinks, activeNodes, normalization, scale, shift)
     simulation.removeForce("Graph force")
     simulation.addForce("Graph force", graphForce)
 }
@@ -207,7 +211,13 @@ private fun findVisibleNames(arrows: List<Arrow>, threshold: Int) =
         arrows.filter { it.link.weight > threshold }.flatMap { it.link.run { listOf(first, second) } }
 
 private fun Dot.isVisible(visibleNames: Collection<String>) =
-        visibleNames.contains(node.name)
+        node.isVisible(visibleNames)
+
+private fun GraphNode.isVisible(visibleNames: Collection<String>) =
+        visibleNames.contains(name)
+
+private fun GraphLink.isVisible(visibleNames: Collection<String>) =
+        visibleNames.contains(first) && visibleNames.contains(second)
 
 private fun Viz.getArrows(links: List<GraphLink>): List<Arrow> {
     val allLines = all<LineNode>()
